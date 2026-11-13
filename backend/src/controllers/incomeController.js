@@ -1,5 +1,5 @@
+import mongoose from 'mongoose'
 import Income from "../models/Income.js";
-import User from "../models/User.js";
 import XLSX from 'xlsx'
 
 export const addIncome = async (req, res) => {
@@ -12,18 +12,26 @@ export const addIncome = async (req, res) => {
         message: "All fields are required",
       });
     }
-    if (amount <= 0) {
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Amount must be greater than 0",
+        message: "Amount must be a number greater than 0",
+      });
+    }
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Date is not valid",
       });
     }
     const income = await Income.create({
       userId,
       icon,
       category,
-      amount,
-      date: new Date(date),
+      amount: numericAmount,
+      date: parsedDate,
       description,
     });
     res.status(201).json({
@@ -57,6 +65,12 @@ export const deleteIncome=async(req,res)=>{
     const id=req.params.id
     const userId=req.user._id
     try{
+        if(!mongoose.isValidObjectId(id)){
+            return res.status(404).json({
+                success:false,
+                message:'Income not found'
+            })
+        }
         const income=await Income.findOne({_id:id,userId})
         if(!income){
             return res.status(404).json({

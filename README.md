@@ -1,125 +1,110 @@
-# ExpenseTracker
+# FinanceOwl
 
-A full-stack application to track your income and expenses, visualize your financial data, and manage your financial health.
+A full-stack personal finance tracker. Record income and expenses, see your
+balance and recent activity on a dashboard, visualise trends, and export your
+data to Excel.
 
 ## Features
 
-- **User Authentication**: Secure signup and login.
-- **Dashboard**: Overview of total income, expenses, balance, and recent transactions.
-- **Income Management**: Add, view, and delete income records with category and date.
-- **Expense Management**: Add, view, and delete expense records with category and date.
-- **Data Visualization**: Line graphs and pie charts for income and expense trends/distribution.
-- **Responsive Design**: Optimized for various screen sizes.
-- **Modern UI**: Built with React, Tailwind CSS, and DaisyUI components.
+- **Accounts**: sign up, log in and log out; sessions are kept in an
+  HTTP-only cookie holding a JWT
+- **Dashboard**: total income, total expenses, balance, last 30 days and the
+  ten most recent transactions
+- **Income and expenses**: add, list and delete entries with category, emoji
+  icon, amount, date and description
+- **Charts**: trends and category breakdowns
+- **Excel export** of income and expense records
+- **Responsive UI** built with Tailwind CSS and daisyUI
 
-## Technologies Used
+## Tech stack
 
-### Frontend
-- **React**: A JavaScript library for building user interfaces.
-- **React Router DOM**: For declarative routing in React applications.
-- **Axios**: For making HTTP requests to the backend API.
-- **React Hot Toast**: For beautiful and responsive notifications.
-- **Chart.js & React-Chartjs-2**: For creating interactive data visualizations.
-- **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
-- **DaisyUI**: A Tailwind CSS component library for ready-made UI components.
+| Layer | Tools |
+| --- | --- |
+| Frontend | React 19, Vite, React Router, Axios, Chart.js, Recharts, Tailwind CSS 4, daisyUI |
+| Backend | Node.js, Express 5, Mongoose 8, JSON Web Tokens, bcryptjs, SheetJS |
+| Database | MongoDB |
+
+## Getting started
+
+Requires Node.js 20+ and a MongoDB instance (local or Atlas).
 
 ### Backend
-- **Node.js**: A JavaScript runtime built on Chrome's V8 JavaScript engine.
-- **Express.js**: A fast, unopinionated, minimalist web framework for Node.js.
-- **MongoDB**: A NoSQL document database.
-- **Mongoose**: An ODM (Object Data Modeling) library for MongoDB and Node.js.
-- **bcryptjs**: For password hashing.
-- **jsonwebtoken**: For creating and verifying JWTs for authentication.
-- **Cookie-parser**: Middleware to parse cookies.
-- **CORS**: Node.js package for providing a Connect/Express middleware that can be used to enable CORS with various options.
-- **Dotenv**: To load environment variables from a `.env` file.
-- **Nodemon**: A tool that helps develop Node.js based applications by automatically restarting the node application when file changes in the directory are detected.
 
-## Setup Instructions
-
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (local or cloud-based service like MongoDB Atlas)
-
-### 1. Clone the repository
-```bash
-git clone <repository_url>
-cd expenseTracker
-```
-
-### 2. Backend Setup
-Navigate to the `backend` directory and install dependencies:
 ```bash
 cd backend
 npm install
-```
-
-Create a `.env` file in the `backend` directory with the following content:
-```
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-PORT=3000
-```
-Replace `your_mongodb_connection_string` with your MongoDB URI (e.g., `mongodb://localhost:27017/expense_tracker` or your MongoDB Atlas connection string).
-Replace `your_jwt_secret_key` with a strong, random string.
-
-Start the backend server:
-```bash
+cp .env.example .env      # set MONGO_URI and JWT_SECRET
 npm run dev
 ```
-The backend server will run on `http://localhost:3000`.
 
-### 3. Frontend Setup
-Open a new terminal, navigate to the `frontend` directory and install dependencies:
+The API runs on http://localhost:3000.
+
+### Frontend
+
 ```bash
-cd ../frontend
+cd frontend
 npm install
-```
-
-Start the frontend development server:
-```bash
 npm run dev
 ```
-The frontend application will run on `http://localhost:5173`.
 
-### 4. Usage
-Open your browser and go to `http://localhost:5173`.
-- Sign up for a new account or log in with existing credentials.
-- Navigate to the Dashboard, Income, and Expense pages to manage your finances.
+The app runs on http://localhost:5173.
 
-## Project Structure
+## Configuration
+
+Backend (`backend/.env`):
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `MONGO_URI` | yes | MongoDB connection string |
+| `JWT_SECRET` | yes | Signs session tokens; use a long random value |
+| `PORT` | no | Defaults to 3000 |
+| `CLIENT_ORIGIN` | no | Comma-separated frontend origins allowed by CORS. Defaults to `http://localhost:5173` |
+| `NODE_ENV` | no | `production` marks the cookie as HTTPS-only |
+| `COOKIE_SAME_SITE` | no | Set to `none` when the frontend is on a different site from the API |
+
+Frontend (`frontend/.env`):
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `VITE_API_URL` | no | Full API base URL, e.g. `https://api.example.com/api/v1`. Defaults to the local backend in development and `/api/v1` on the same origin in production |
+
+## API
+
+All routes are under `/api/v1`. Everything except register and login requires
+the session cookie.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Liveness check |
+| POST | `/auth/register` | Create an account |
+| POST | `/auth/login` | Log in |
+| POST | `/auth/logout` | Log out |
+| GET | `/auth/getUser` | Current user |
+| GET | `/dashboard` | Totals and recent transactions |
+| POST | `/income/add-income` | Add income |
+| GET | `/income/get-incomes` | List income |
+| DELETE | `/income/delete-income/:id` | Delete income |
+| GET | `/income/download-income` | Excel export |
+| POST | `/expense/add-expense` | Add expense |
+| GET | `/expense/get-expenses` | List expenses |
+| DELETE | `/expense/delete-expense/:id` | Delete expense |
+| GET | `/expense/download-expense` | Excel export |
+
+## Project structure
 
 ```
-expenseTracker/
+FinanceOwl/
 ├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   │   └── db.js
-│   │   ├── controllers/
-│   │   ├── middlewares/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── uploads/
-│   │   └── utils/
-│   ├── package.json
-│   └── server.js
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── assets/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── hooks/
-│   │   ├── pages/
-│   │   │   ├── Auth/
-│   │   │   ├── Dashboard/
-│   │   │   └── GetStarted.jsx
-│   │   └── utils/
-│   ├── index.html
-│   └── package.json
-└── README.md
-└── .gitignore
+│   └── src/
+│       ├── config/         database connection
+│       ├── controllers/    auth, income, expense, dashboard
+│       ├── middlewares/    session check
+│       ├── models/         User, Income, Expense
+│       ├── routes/
+│       └── server.js
+└── frontend/
+    └── src/
+        ├── components/     modals, navbar, route guard
+        ├── pages/          Auth, Dashboard, GetStarted
+        └── utils/api.js    Axios client
 ```
-
-## Contributing
-Feel free to fork the repository and contribute. 

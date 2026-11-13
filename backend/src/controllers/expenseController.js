@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import Expense from "../models/Expense.js";
 import XLSX from 'xlsx'
 export const addExpense = async (req, res) => {
@@ -10,18 +11,26 @@ export const addExpense = async (req, res) => {
         message: "All fields are required",
       });
     }
-    if (amount <= 0) {
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Amount must be greater than 0",
+        message: "Amount must be a number greater than 0",
+      });
+    }
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Date is not valid",
       });
     }
     const expense = await Expense.create({
       userId,
       icon,
       category,
-      amount,
-      date: new Date(date),
+      amount: numericAmount,
+      date: parsedDate,
       description,
     });
     res.status(201).json({
@@ -55,6 +64,12 @@ export const deleteExpense=async(req,res)=>{
     const id=req.params.id
     const userId=req.user._id
     try{
+        if(!mongoose.isValidObjectId(id)){
+            return res.status(404).json({
+                success:false,
+                message:'Expense not found'
+            })
+        }
         const expense=await Expense.findOne({_id:id,userId})
         if(!expense){
             return res.status(404).json({
