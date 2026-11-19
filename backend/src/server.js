@@ -1,12 +1,7 @@
-import express from 'express'
-import cors from 'cors'
 import dotenv from 'dotenv'
-import cookieParser from 'cookie-parser'
+import mongoose from 'mongoose'
 import connectDB from './config/db.js'
-import authRoutes from './routes/authRoutes.js'
-import incomeRoutes from './routes/incomeRoutes.js'
-import expenseRoutes from './routes/expenseRoutes.js'
-import dashboardRoutes from './routes/dashboardRoutes.js'
+import { createApp } from './app.js'
 
 dotenv.config()
 
@@ -18,45 +13,22 @@ for (const name of ['MONGO_URI', 'JWT_SECRET']) {
 }
 
 const PORT = process.env.PORT || 3000
-// Comma-separated list, e.g. "http://localhost:5173,https://app.example.com"
-const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-
-const app = express()
-
-app.use(cors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}))
-app.use(express.json({ limit: '100kb' }))
-app.use(cookieParser())
-
-app.get('/api/v1/health', (req, res) => res.json({ success: true }))
-app.use('/api/v1/auth', authRoutes)
-app.use('/api/v1/income', incomeRoutes)
-app.use('/api/v1/expense', expenseRoutes)
-app.use('/api/v1/dashboard', dashboardRoutes)
-
-app.use((req, res) => {
-    res.status(404).json({ success: false, message: 'Route not found' })
-})
-
-// Malformed JSON bodies and anything a route did not catch end up here.
-app.use((error, req, res, next) => {
-    const status = error.status || error.statusCode || 500
-    if (status >= 500) console.error(error)
-    res.status(status).json({
-        success: false,
-        message: status >= 500 ? 'Internal server error' : error.message
-    })
-})
+const app = createApp()
 
 // Connect first so the server never accepts requests it cannot serve.
 await connectDB()
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })
+
+// Let in-flight requests finish and close the database cleanly, e.g. when
+// a container is stopped.
+const shutdown = (signal) => {
+    console.log(`${signal} received, shutting down`)
+    server.close(async () => {
+        await mongoose.connection.close()
+        process.exit(0)
+    })
+}
+process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => shutdown('SIGTERM'))
